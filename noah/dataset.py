@@ -45,6 +45,8 @@ class DataSet:
 
         return wordId
 
-    def decodeId(self, word):
-        pass
+    def decodeId(self, idNum):
+        return self.id2word[idNum]
 
+    def sequence2str(self, seq):
+        return " ".join([self.decodeId(x) for x in seq])
