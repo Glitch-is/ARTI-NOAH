@@ -36,12 +36,17 @@ class DataSet:
             self.trainingExamples.append([question, answer])
 
     def extractText(self, line):
-        seq = []
+        seq = [self.tokens["GO"]]
 
         #TODO: iterate through sentences
         tokens = nltk.word_tokenize(line)
         for token in tokens:
             seq.append(self.encodeWord(token))
+        seq.append(self.tokens["END"])
+
+        # Add padding
+        while len(seq) < 25:
+            seq.append(self.tokens["PAD"])
         return seq
 
 
