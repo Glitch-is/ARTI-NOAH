@@ -6,6 +6,13 @@ class DataSet:
         tf.logging.vlog(tf.logging.INFO, "Initializing DateSet...")
         self.trainingExamples = []  # stored in the form of [[question,answer]]
 
+        self.tokens = {
+            "PAD": -1,
+            "GO": -1,
+            "END": -1,
+            "UNKNOWN": -1
+        }
+
         self.word2id = {}
         self.id2word = {} # for fast reverse lookup
 
@@ -14,6 +21,11 @@ class DataSet:
         tf.logging.vlog(tf.logging.INFO, "Finished Initializing DateSet!")
 
     def loadData(self):
+        self.tokens["PAD"] = self.encodeWord("<PAD>")
+        self.tokens["GO"] = self.encodeWord("<GO>")
+        self.tokens["END"] = self.encodeWord("<END>")
+        self.tokens["UNKNOWN"] = self.encodeWord("<UNKNOWN>")
+
         lines = []
         #TODO: take dataset file as parameter
         with open("data/test/test.txt", "r") as f:
@@ -49,4 +61,10 @@ class DataSet:
         return self.id2word[idNum]
 
     def sequence2str(self, seq):
-        return " ".join([self.decodeId(x) for x in seq])
+        ret = []
+        for id in seq:
+            if id == self.tokens["END"]:
+                break
+            if id != self.tokens["PAD"] and id != self.tokens["GO"]:
+                ret.append(self.id2word[id])
+        return " ".join(ret)
