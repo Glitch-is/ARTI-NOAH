@@ -8,7 +8,7 @@ class Dataset:
         self.maxLen = maxLen
         self.trainFrac = trainFrac
         self.testFrac = 1 - trainFrac
-        
+
         self.trainingExamples = []  # stored in the form of [[question,answer]]
         self.testingExamples = []
 
@@ -40,12 +40,20 @@ class Dataset:
         testSplit = int(len(lines) * self.trainFrac)
         # TODO: split into training and test data
         for lineNum in range(0, len(lines)-1, 2):
-            question = self.extractText(lines[lineNum])
+            question = self.extractText(lines[lineNum])[::-1]
+            question = self.addPadding(question)
             answer = self.extractText(lines[lineNum+1])
+            answer = self.addPadding(answer)
+            example = question + [self.tokens["GO"]] + answer + [self.tokens["END"]]
+
             if lineNum <= testSplit:
-                self.trainingExamples.append([question, answer])
+                self.trainingExamples.append(example)
             else:
-                self.testingExamples.append([question, answer])
+                self.testingExamples.append(example)
+
+    def addPadding(self, seq):
+        return [self.tokens["PAD"]] * (self.maxLen - len(seq)) + seq
+
 
     def extractText(self, line):
         seq = []
@@ -57,9 +65,6 @@ class Dataset:
             seq.append(self.encodeWord(token))
         seq.append(self.tokens["END"])
 
-        # Add padding
-        while len(seq) < self.maxLen:
-            seq.append(self.tokens["PAD"])
         return seq
 
 

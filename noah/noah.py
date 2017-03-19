@@ -5,7 +5,7 @@ import math
 
 from tensorflow.python import debug as tf_debug
 
-from noah.dataset import DataSet
+from noah.dataset import Dataset
 from noah.model import Model
 
 class Noah:
@@ -18,10 +18,10 @@ class Noah:
         tf.logging.set_verbosity(tf.logging.DEBUG) # DEBUG, INFO, WARN (default), ERROR, or FATAL
 
         # Fetch and prepare text
-        self.dataset = DataSet()
+        self.dataset = Dataset("data/test/test.txt")
 
         # pass the data to our model
-        self.model = Model(self.dataset)
+        # self.model = Model(self.dataset)
 
         # Start a tensorflow session
-        self.sess = tf.Session()
+        # self.sess = tf.Session()
