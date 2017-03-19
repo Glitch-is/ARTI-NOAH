@@ -40,19 +40,18 @@ class Dataset:
         testSplit = int(len(lines) * self.trainFrac)
         # TODO: split into training and test data
         for lineNum in range(0, len(lines)-1, 2):
-            question = self.extractText(lines[lineNum])[::-1]
-            question = self.addPadding(question)
+            question = self.extractText(lines[lineNum])
+            question = self.addPadding(question)[::-1]
             answer = self.extractText(lines[lineNum+1])
-            answer = self.addPadding(answer)
-            example = question + [self.tokens["GO"]] + answer + [self.tokens["END"]]
+            answer = self.addPadding(answer + [self.tokens["END"]])
 
             if lineNum <= testSplit:
-                self.trainingExamples.append(example)
+                self.trainingExamples.append([question, answer])
             else:
-                self.testingExamples.append(example)
+                self.testingExamples.append([question, answer])
 
     def addPadding(self, seq):
-        return [self.tokens["PAD"]] * (self.maxLen - len(seq)) + seq
+        return seq + [self.tokens["PAD"]] * (self.maxLen - len(seq))
 
 
     def extractText(self, line):
