@@ -1,14 +1,20 @@
 import nltk
 import tensorflow as tf
 
-class DataSet:
-    def __init__(self):
+class Dataset:
+    def __init__(self, datasetPath, maxLen=25, trainFrac=0.80):
         tf.logging.vlog(tf.logging.INFO, "Initializing DateSet...")
+        self.datasetPath = datasetPath
+        self.maxLen = maxLen
+        self.trainFrac = trainFrac
+        self.testFrac = 1 - trainFrac
+        
         self.trainingExamples = []  # stored in the form of [[question,answer]]
+        self.testingExamples = []
 
         self.tokens = {
-            "PAD": -1,
             "GO": -1,
+            "PAD": -1,
             "END": -1,
             "UNKNOWN": -1
         }
@@ -21,31 +27,38 @@ class DataSet:
         tf.logging.vlog(tf.logging.INFO, "Finished Initializing DateSet!")
 
     def loadData(self):
-        self.tokens["PAD"] = self.encodeWord("<PAD>")
         self.tokens["GO"] = self.encodeWord("<GO>")
+        assert(self.word2id["<go>"] == 0)
+        self.tokens["PAD"] = self.encodeWord("<PAD>")
         self.tokens["END"] = self.encodeWord("<END>")
         self.tokens["UNKNOWN"] = self.encodeWord("<UNKNOWN>")
 
         lines = []
         #TODO: take dataset file as parameter
-        with open("data/test/test.txt", "r") as f:
+        with open(self.datasetPath, "r") as f:
             lines = f.read().split("\n")
+        testSplit = int(len(lines) * self.trainFrac)
+        # TODO: split into training and test data
         for lineNum in range(0, len(lines)-1, 2):
             question = self.extractText(lines[lineNum])
             answer = self.extractText(lines[lineNum+1])
-            self.trainingExamples.append([question, answer])
+            if lineNum <= testSplit:
+                self.trainingExamples.append([question, answer])
+            else:
+                self.testingExamples.append([question, answer])
 
     def extractText(self, line):
-        seq = [self.tokens["GO"]]
+        seq = []
 
-        #TODO: iterate through sentences
+        # TODO: iterate through sentences
+        # TODO: handle if the word count is greater than the max size
         tokens = nltk.word_tokenize(line)
         for token in tokens:
             seq.append(self.encodeWord(token))
         seq.append(self.tokens["END"])
 
         # Add padding
-        while len(seq) < 25:
+        while len(seq) < self.maxLen:
             seq.append(self.tokens["PAD"])
         return seq
 
