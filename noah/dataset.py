@@ -1,4 +1,6 @@
+import random
 import nltk
+import numpy as np
 import tensorflow as tf
 
 class Dataset:
@@ -9,8 +11,8 @@ class Dataset:
         self.trainFrac = trainFrac
         self.testFrac = 1 - trainFrac
 
-        self.trainingExamples = []  # stored in the form of [[question,answer]]
-        self.testingExamples = []
+        self.questions = []
+        self.answers = []
 
         self.tokens = {
             "GO": -1,
@@ -23,8 +25,17 @@ class Dataset:
         self.id2word = {} # for fast reverse lookup
 
         self.loadData()
-        tf.logging.vlog(tf.logging.INFO, "Loaded %d words and %d Q&A pairs" % (len(self.word2id), len(self.trainingExamples)))
+        tf.logging.vlog(tf.logging.INFO, "Loaded %d words and %d Q&A pairs" % (len(self.word2id), len(self.questions)))
         tf.logging.vlog(tf.logging.INFO, "Finished Initializing DateSet!")
+
+    def getTrainingData(self):
+        testSplit = int(len(self.questions) * self.trainFrac)
+        return self.questions[:testSplit], self.answers[:testSplit]
+
+    def getTestingData(self):
+        testSplit = int(len(self.questions) * self.trainFrac)
+        return self.questions[testSplit:], self.answers[testSplit:]
+        
 
     def loadData(self):
         self.tokens["GO"] = self.encodeWord("<GO>")
@@ -37,18 +48,18 @@ class Dataset:
         #TODO: take dataset file as parameter
         with open(self.datasetPath, "r") as f:
             lines = f.read().split("\n")
-        testSplit = int(len(lines) * self.trainFrac)
         # TODO: split into training and test data
         for lineNum in range(0, len(lines)-1, 2):
             question = self.extractText(lines[lineNum])
             question = self.addPadding(question)[::-1]
+            self.questions.append(question)
+
             answer = self.extractText(lines[lineNum+1])
             answer = self.addPadding(answer + [self.tokens["END"]])
-
-            if lineNum <= testSplit:
-                self.trainingExamples.append([question, answer])
-            else:
-                self.testingExamples.append([question, answer])
+            self.answers.append(answer)
+        
+        self.questions = np.array(self.questions)
+        self.answers = np.array(self.answers)
 
     def addPadding(self, seq):
         return seq + [self.tokens["PAD"]] * (self.maxLen - len(seq))
@@ -62,7 +73,6 @@ class Dataset:
         tokens = nltk.word_tokenize(line)
         for token in tokens:
             seq.append(self.encodeWord(token))
-        seq.append(self.tokens["END"])
 
         return seq
 
@@ -90,3 +100,21 @@ class Dataset:
             if id != self.tokens["PAD"] and id != self.tokens["GO"]:
                 ret.append(self.id2word[id])
         return " ".join(ret)
+
+    def getBatch(self, data, batch_size):
+        q, a = data
+        for i in range(0, len(w), batch_size):
+            x, y = q[i:i + batch_size], a[i:i + batch_size]
+            yield x.T, y.T
+
+    def getRandomBatch(self, data, batch_size):
+        # a dooope trick
+        q, a = data
+        while True:
+            s = random.sample(list(np.arange(len(q))), batch_size)
+            # using a list to index a numpy matrix gives you the row vectors corresponding to that index
+            x, y = q[s], a[s]
+            # transpose because we want a[i] to be the vector for the word at i
+            yield x.T, y.T
+            
+

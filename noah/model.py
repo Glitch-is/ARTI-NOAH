@@ -146,12 +146,19 @@ class Model:
                     sys.stdout.flush()
             except KeyboardInterrupt: # this will most definitely happen, so handle it
                 tf.logging.vlog(tf.logging.INFO, "Interrupted by user at iteration {}".format(i))
-                self.session = sess
-                return sess
+                break
             except StopIteration: # We don't have any more training data
                 tf.logging.vlog(tf.logging.INFO, "Ran out of training data at iteration {}".format(i))
-                self.session = sess
-                return sess
+                break
+        else:
+            tf.logging.vlog(tf.logging.INFO, "Finished Training!")
+
+        saver.save(sess, self.save_path + self.model_name + '.ckpt', global_step=i)
+        # print stats
+        print('Model saved to disk at end of training')
+        sys.stdout.flush()
+        self.session = sess
+        return sess
 
     def restore_last_session(self):
         saver = tf.train.Saver()
@@ -167,9 +174,9 @@ class Model:
 
     # prediction
     def predict(self, sess, X):
-        assert(len(x) == self.xlen)
+        assert(len(X) == self.xlen)
         feed_dict = {self.encoder_inputs[t]: X[t] for t in range(self.xlen)}
-        feed_dict[self.keep_prob] = 1.
+        feed_dict[self.keep_prob] = 1.0
         dec_op_v = sess.run(self.decode_outputs_test, feed_dict)
         # dec_op_v is a list; also need to transpose 0,1 indices 
         #  (interchange batch_size and timesteps dimensions)
