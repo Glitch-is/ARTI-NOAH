@@ -6,14 +6,14 @@ import tensorflow as tf
 tf.logging.set_verbosity(tf.logging.INFO)
 
 
-dataset = Dataset("data/test/samples.txt")
+dataset = Dataset("data/twitter.txt")
 xlen = ylen = 25
 xsize = ysize = len(dataset.word2id)
 hidden_size = 512
 embedding_size = 128
 num_layers=3
-save_path="save/samples/"
-batch_size=5
+save_path="save/twitter/"
+batch_size=25
 epochs=200
 model = Model(xlen=xlen, ylen=ylen, xsize=xsize, ysize=ysize,
               hidden_size=hidden_size,

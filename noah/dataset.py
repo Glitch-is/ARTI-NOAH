@@ -35,7 +35,6 @@ class Dataset:
     def getTestingData(self):
         testSplit = int(len(self.questions) * self.trainFrac)
         return self.questions[testSplit:], self.answers[testSplit:]
-        
 
     def loadData(self):
         self.tokens["GO"] = self.encodeWord("<GO>")
@@ -57,7 +56,7 @@ class Dataset:
             answer = self.extractText(lines[lineNum+1])
             answer = self.addPadding(answer + [self.tokens["END"]])
             self.answers.append(answer)
-        
+
         self.questions = np.array(self.questions)
         self.answers = np.array(self.answers)
 
@@ -116,5 +115,5 @@ class Dataset:
             x, y = q[s], a[s]
             # transpose because we want a[i] to be the vector for the word at i
             yield x.T, y.T
-            
+
 

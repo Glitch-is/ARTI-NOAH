@@ -103,6 +103,12 @@ class Model:
         batchX, batchY = train_batch_gen.__next__()
         # build feed
         feed = self.get_feed(batchX, batchY, keep_prob=self.dropout_prob)
+        # print("Train op: ")
+        # print(self.train_op)
+        # print("Loss: ")
+        # print(self.loss)
+        # print("feed: ")
+        # print(len(feed))
         _, loss_v = sess.run([self.train_op, self.loss], feed)
         return loss_v
 
