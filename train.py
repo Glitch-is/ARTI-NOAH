@@ -22,7 +22,10 @@ model = Model(xlen=xlen, ylen=ylen, xsize=xsize, ysize=ysize,
               save_path=save_path,
               epochs=epochs)
 
-training_batch = dataset.getRandomBatch(dataset.getTrainingData(), batch_size)
+training = dataset.getTrainingData()
+print(training[0].shape, training[1].shape)
+
+training_batch = dataset.getRandomBatch(training, batch_size)
 test_batch = dataset.getRandomBatch(dataset.getTestingData(), batch_size)
 model.train(training_batch, test_batch)
 

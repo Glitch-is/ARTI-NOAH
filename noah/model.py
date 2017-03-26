@@ -91,6 +91,7 @@ class Model:
         # print(len(self.encoder_inputs))
         # print("Xlen:")
         # print(self.xlen)
+
         feed = {self.encoder_inputs[t]: X[t] for t in range(self.xlen)}
         feed.update({self.labels[t]: Y[t] for t in range(self.ylen)})
         # probability of a dropout

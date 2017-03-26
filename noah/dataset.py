@@ -4,10 +4,11 @@ import numpy as np
 import tensorflow as tf
 
 class Dataset:
-    def __init__(self, datasetPath, maxLen=25, trainFrac=0.80):
+    def __init__(self, datasetPath, maxX=25, maxY=25, trainFrac=0.80):
         tf.logging.vlog(tf.logging.INFO, "Initializing DateSet...")
         self.datasetPath = datasetPath
-        self.maxLen = maxLen
+        self.maxX = maxX
+        self.maxY = maxY
         self.trainFrac = trainFrac
         self.testFrac = 1 - trainFrac
 
@@ -53,7 +54,7 @@ class Dataset:
             question = self.addPadding(question)[::-1]
             self.questions.append(question)
 
-            answer = self.extractText(lines[lineNum+1])
+            answer = self.extractText(lines[lineNum+1], answer=True)
             answer = self.addPadding(answer + [self.tokens["END"]])
             self.answers.append(answer)
 
@@ -61,15 +62,28 @@ class Dataset:
         self.answers = np.array(self.answers)
 
     def addPadding(self, seq):
-        return seq + [self.tokens["PAD"]] * (self.maxLen - len(seq))
+        return seq + [self.tokens["PAD"]] * (self.maxX - len(seq))
 
 
-    def extractText(self, line):
+    def extractText(self, line, answer=False):
         seq = []
 
         # TODO: iterate through sentences
         # TODO: handle if the word count is greater than the max size
+        sentence_tokens = nltk.sent_tokenize(line)
+        if answer:
+            line = sentence_tokens[0]
+        else:
+            line = sentence_tokens[-1]
+
         tokens = nltk.word_tokenize(line)
+        if answer: 
+            if len(tokens) > self.maxY:
+                tokens = tokens[:self.maxY]
+        else:
+            if len(tokens) >= self.maxX:
+                tokens = tokens[:self.maxX]
+
         for token in tokens:
             seq.append(self.encodeWord(token))
 
@@ -110,6 +124,7 @@ class Dataset:
         # a dooope trick
         q, a = data
         while True:
+            print(len(q), batch_size)
             s = random.sample(list(np.arange(len(q))), batch_size)
             # using a list to index a numpy matrix gives you the row vectors corresponding to that index
             x, y = q[s], a[s]
