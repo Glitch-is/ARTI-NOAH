@@ -78,8 +78,8 @@ class Dataset:
 
         tokens = nltk.word_tokenize(line)
         if answer: 
-            if len(tokens) > self.maxY:
-                tokens = tokens[:self.maxY]
+            if len(tokens) >= (self.maxY - 1):
+                tokens = tokens[:self.maxY - 1]
         else:
             if len(tokens) >= self.maxX:
                 tokens = tokens[:self.maxX]
