@@ -103,13 +103,19 @@ class Dataset:
                 osubs = OpensubsData(self.datasetPath)
                 conversations = osubs.getConversations()
                 for conversation in conversations:
-                    question = self.extractText(conversation["lines"][0]["text"])
-                    question = self.addPadding(question)[::-1]
-                    self.questions.append(question)
+                    questionText = conversation["lines"][0]["text"]
+                    questionText = questionText.strip().replace(".", "").replace(",", "").replace("' ", "").replace("'", "").replace("!", "").replace("?", "")
+                    answerText = conversation["lines"][1]["text"]
+                    answerText = answerText.strip().replace(".", "").replace(",", "").replace("' ", "").replace("'", "").replace("!", "").replace("?", "")
+                    if questionText != "" and answerText != "":
+                        if not questionText.isspace() and not answerText.isspace():
+                            question = self.extractText(questionText)
+                            question = self.addPadding(question)[::-1]
+                            self.questions.append(question)
 
-                    answer = self.extractText(conversation["lines"][1]["text"], answer=True)
-                    answer = self.addPadding(answer + [self.tokens["END"]])
-                    self.answers.append(answer)
+                            answer = self.extractText(answerText, answer=True)
+                            answer = self.addPadding(answer + [self.tokens["END"]])
+                            self.answers.append(answer)
 
             self.questions = np.array(self.questions)
             self.answers = np.array(self.answers)
