@@ -4,7 +4,7 @@ import numpy as np
 import tensorflow as tf
 
 class Dataset:
-    def __init__(self, datasetPath, maxX=25, maxY=25, trainFrac=0.80, vocab_size=4000):
+    def __init__(self, datasetPath, maxX=25, maxY=25, trainFrac=0.80, vocab_size=40000):
         tf.logging.vlog(tf.logging.INFO, "Initializing Dataset...")
         self.datasetPath = datasetPath
         self.maxX = maxX
