@@ -85,7 +85,7 @@ class Dataset:
                 # print("Word2id: ")
                 # print(len(self.word2id))
 
-                lines = cleanText(lines)
+                lines = self.cleanText(lines)
 
                 # TODO: split into training and test data
                 for lineNum in range(0, len(lines)-1, 2):
@@ -104,8 +104,8 @@ class Dataset:
                 osubs = OpensubsData(self.datasetPath)
                 conversations = osubs.getConversations()
                 for conversation in conversations:
-                    questionText = cleanText(conversation["lines"][0]["text"])
-                    answerText = cleanText(conversation["lines"][1]["text"])
+                    questionText = self.cleanText(conversation["lines"][0]["text"])
+                    answerText = self.cleanText(conversation["lines"][1]["text"])
 
                     if questionText != "" and answerText != "":
                         if not questionText.isspace() and not answerText.isspace():
@@ -129,7 +129,7 @@ class Dataset:
                 }
                 pickle.dump(data, f, -1)
 
-    def cleanText(text):
+    def cleanText(self, text):
         return re.sub('[^a-zA-Z0-9 ]','', text)
 
     def addPadding(self, seq):
