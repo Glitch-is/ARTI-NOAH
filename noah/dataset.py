@@ -5,6 +5,7 @@ import tensorflow as tf
 from noah.corpus.opensubsdata import OpensubsData
 import os
 import pickle
+import re
 
 class Dataset:
     def __init__(self, datasetPath, maxX=25, maxY=25, trainFrac=0.80, vocab_size=20000, corpus="txt"):
@@ -84,7 +85,7 @@ class Dataset:
                 # print("Word2id: ")
                 # print(len(self.word2id))
 
-                lines = lines.replace(".", "").replace(",", "").replace("'", "").replace("?", "").replace("!", "").split("\n")
+                lines = cleanText(lines)
 
                 # TODO: split into training and test data
                 for lineNum in range(0, len(lines)-1, 2):
@@ -103,10 +104,9 @@ class Dataset:
                 osubs = OpensubsData(self.datasetPath)
                 conversations = osubs.getConversations()
                 for conversation in conversations:
-                    questionText = conversation["lines"][0]["text"]
-                    questionText = questionText.strip().replace(".", "").replace(",", "").replace("' ", "").replace("'", "").replace("!", "").replace("?", "")
-                    answerText = conversation["lines"][1]["text"]
-                    answerText = answerText.strip().replace(".", "").replace(",", "").replace("' ", "").replace("'", "").replace("!", "").replace("?", "")
+                    questionText = cleanText(conversation["lines"][0]["text"])
+                    answerText = cleanText(conversation["lines"][1]["text"])
+
                     if questionText != "" and answerText != "":
                         if not questionText.isspace() and not answerText.isspace():
                             question = self.extractText(questionText)
@@ -129,6 +129,9 @@ class Dataset:
                 }
                 pickle.dump(data, f, -1)
 
+    def cleanText(text):
+        return re.sub('[^a-zA-Z0-9 ]','', text)
+
     def addPadding(self, seq):
         return seq + [self.tokens["PAD"]] * (self.maxX - len(seq))
 
@@ -143,7 +146,7 @@ class Dataset:
             line = sentence_tokens[-1]
 
         tokens = nltk.word_tokenize(line)
-        if answer: 
+        if answer:
             if len(tokens) >= (self.maxY - 1):
                 tokens = tokens[:self.maxY - 1]
         else:
