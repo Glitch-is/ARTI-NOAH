@@ -6,7 +6,7 @@ import tensorflow as tf
 tf.logging.set_verbosity(tf.logging.INFO)
 
 
-dataset = Dataset("data/twitter.txt")
+dataset = Dataset("data/opensubs/OpenSubtitles", corpus="opensubs")
 xlen = ylen = 25
 xsize = ysize = len(dataset.word2id)
 hidden_size = 512
