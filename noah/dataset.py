@@ -52,16 +52,8 @@ class Dataset:
             lines = f.read()
 
         vocab = [x[0] for x in nltk.FreqDist(nltk.word_tokenize(lines.lower())).most_common(self.vocab_size)]
-        # print(vocab)
-
-        print("Vocab: ")
-        print(len(vocab))
-
         for word in vocab:
             self.encodeWordStore(word)
-
-        print("Word2id: ")
-        print(len(self.word2id))
 
         lines = lines.split("\n")
 
@@ -150,7 +142,6 @@ class Dataset:
         # a dooope trick
         q, a = data
         while True:
-            print(len(q), batch_size)
             s = random.sample(list(np.arange(len(q))), batch_size)
             # using a list to index a numpy matrix gives you the row vectors corresponding to that index
             x, y = q[s], a[s]
