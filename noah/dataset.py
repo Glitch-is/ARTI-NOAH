@@ -163,7 +163,6 @@ class Dataset:
         # a dooope trick
         q, a = data
         while True:
-            print(len(q), batch_size)
             s = random.sample(list(np.arange(len(q))), batch_size)
             # using a list to index a numpy matrix gives you the row vectors corresponding to that index
             x, y = q[s], a[s]
