@@ -13,10 +13,10 @@ embedding_size = 128
 num_layers=3
 save_path="save/samples/"
 batch_size=5
-model = Model(xlen=xlen, ylen=ylen, xsize=xsize, ysize=ysize, 
-              hidden_size=hidden_size, 
-              embedding_size=embedding_size, 
-              num_layers=num_layers, 
+model = Model(xlen=xlen, ylen=ylen, xsize=xsize, ysize=ysize,
+              hidden_size=hidden_size,
+              embedding_size=embedding_size,
+              num_layers=num_layers,
               save_path=save_path)
 
 session = model.restore_last_session()

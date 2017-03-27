@@ -35,16 +35,16 @@ class Model:
 
         #  encoder inputs : list of indices of length xlen
         self.encoder_inputs = [ tf.placeholder(shape=[None,], 
-                        dtype=tf.int64, 
+                        dtype=tf.int32, 
                         name='ei_{}'.format(t)) for t in range(xlen) ]
 
         #  labels that represent the real outputs
         self.labels = [ tf.placeholder(shape=[None,], 
-                        dtype=tf.int64, 
+                        dtype=tf.int32, 
                         name='el_{}'.format(t)) for t in range(ylen) ]
 
         #  decoder inputs : 'GO' + [ y1, y2, ... y_t-1 ]
-        self.decoder_inputs = [ tf.zeros_like(self.encoder_inputs[0], dtype=tf.int64, name='GO') ] + self.labels[:-1]
+        self.decoder_inputs = [ tf.zeros_like(self.encoder_inputs[0], dtype=tf.int32, name='GO') ] + self.labels[:-1]
 
 
         # Basic LSTM cell wrapped in Dropout Wrapper

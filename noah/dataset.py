@@ -4,13 +4,15 @@ import numpy as np
 import tensorflow as tf
 
 class Dataset:
-    def __init__(self, datasetPath, maxX=25, maxY=25, trainFrac=0.80):
+    def __init__(self, datasetPath, maxX=25, maxY=25, trainFrac=0.80, vocab_size=4000):
         tf.logging.vlog(tf.logging.INFO, "Initializing DateSet...")
         self.datasetPath = datasetPath
         self.maxX = maxX
         self.maxY = maxY
         self.trainFrac = trainFrac
         self.testFrac = 1 - trainFrac
+        self.vocab_size = vocab_size
+
 
         self.questions = []
         self.answers = []
@@ -38,16 +40,31 @@ class Dataset:
         return self.questions[testSplit:], self.answers[testSplit:]
 
     def loadData(self):
-        self.tokens["GO"] = self.encodeWord("<GO>")
+        self.tokens["GO"] = self.encodeWordStore("<GO>")
         assert(self.word2id["<go>"] == 0)
-        self.tokens["PAD"] = self.encodeWord("<PAD>")
-        self.tokens["END"] = self.encodeWord("<END>")
-        self.tokens["UNKNOWN"] = self.encodeWord("<UNKNOWN>")
+        self.tokens["PAD"] = self.encodeWordStore("<PAD>")
+        self.tokens["END"] = self.encodeWordStore("<END>")
+        self.tokens["UNKNOWN"] = self.encodeWordStore("<UNKNOWN>")
 
         lines = []
         #TODO: take dataset file as parameter
         with open(self.datasetPath, "r") as f:
-            lines = f.read().split("\n")
+            lines = f.read()
+
+        vocab = [x[0] for x in nltk.FreqDist(nltk.word_tokenize(lines.lower())).most_common(self.vocab_size)]
+        # print(vocab)
+
+        print("Vocab: ")
+        print(len(vocab))
+
+        for word in vocab:
+            self.encodeWordStore(word)
+
+        print("Word2id: ")
+        print(len(self.word2id))
+
+        lines = lines.split("\n")
+
         # TODO: split into training and test data
         for lineNum in range(0, len(lines)-1, 2):
             question = self.extractText(lines[lineNum])
@@ -90,12 +107,24 @@ class Dataset:
         return seq
 
 
-    def encodeWord(self, word):
+    def encodeWordStore(self, word):
         word = word.lower()
 
         wordId = self.word2id.get(word)
         if not wordId:
             wordId = len(self.word2id)
+
+        self.word2id[word] = wordId
+        self.id2word[wordId] = word
+
+        return wordId
+
+    def encodeWord(self, word):
+        word = word.lower()
+
+        wordId = self.word2id.get(word)
+        if not wordId:
+            wordId = self.tokens["UNKNOWN"]
 
         self.word2id[word] = wordId
         self.id2word[wordId] = word
