@@ -7,12 +7,12 @@ tf.logging.set_verbosity(tf.logging.INFO)
 
 
 xlen = ylen = 5
-dataset = Dataset("data/twitter.txt", maxX=xlen, maxY=ylen)
+dataset = Dataset("data/opensubs/OpenSubtitles", maxX=xlen, maxY=ylen, corpus="opensubs")
 xsize = ysize = len(dataset.word2id)
 hidden_size = 512
 embedding_size = 25
 num_layers=3
-save_path="save/twitter/"
+save_path="save/opensubs/"
 batch_size=40
 epochs=1000
 learning_rate=0.002
@@ -29,8 +29,3 @@ training = dataset.getTrainingData()
 training_batch = dataset.getRandomBatch(training, batch_size)
 test_batch = dataset.getRandomBatch(dataset.getTestingData(), batch_size)
 model.train(training_batch, test_batch)
-
-
-
-
-
