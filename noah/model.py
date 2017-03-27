@@ -17,8 +17,8 @@ class Model:
     def __init__(self, xlen, ylen, 
             xsize, ysize,
             hidden_size, embedding_size, num_layers, save_path,
-            learning_rate=0.0001, dropout_prob=0.5,
-            epochs=100000, model_name='seq2seq_model'):
+            learning_rate=0.001, dropout_prob=0.5,
+            epochs=100000, model_name='seq2seq_model', train=True):
 
         # attach these arguments to self
         self.xlen = xlen
@@ -27,6 +27,7 @@ class Model:
         self.epochs = epochs
         self.model_name = model_name
         self.dropout_prob = dropout_prob
+        self.is_training = train
 
         tf.logging.vlog(tf.logging.INFO, "Initializing Model...")
 
@@ -56,35 +57,42 @@ class Model:
         # stack cells together : n layered model
         stacked_lstm = tf.contrib.rnn.MultiRNNCell([basic_cell] * num_layers, state_is_tuple=True)
 
+        if self.is_training:
+            # for parameter sharing between training model
+            #  and testing model
+            with tf.variable_scope('decoder') as scope:
+                # build the seq2seq model 
+                #  inputs : encoder, decoder inputs, LSTM cell type, vocabulary sizes, embedding dimensions
+                self.decode_outputs, self.decode_states = tf.contrib.legacy_seq2seq.embedding_rnn_seq2seq(self.encoder_inputs,self.decoder_inputs, stacked_lstm,
+                                                    xsize, ysize, embedding_size)
+                # share parameters
+                scope.reuse_variables()
+                # testing model, where output of previous timestep is fed as input 
+                #  to the next timestep
+                self.decode_outputs_test, self.decode_states_test = tf.contrib.legacy_seq2seq.embedding_rnn_seq2seq(
+                    self.encoder_inputs, self.decoder_inputs, stacked_lstm, xsize, ysize,embedding_size,
+                    feed_previous=True)
 
-        # for parameter sharing between training model
-        #  and testing model
-        with tf.variable_scope('decoder') as scope:
-            # build the seq2seq model 
-            #  inputs : encoder, decoder inputs, LSTM cell type, vocabulary sizes, embedding dimensions
-            self.decode_outputs, self.decode_states = tf.contrib.legacy_seq2seq.embedding_rnn_seq2seq(self.encoder_inputs,self.decoder_inputs, stacked_lstm,
-                                                xsize, ysize, embedding_size)
-            # share parameters
-            scope.reuse_variables()
-            # testing model, where output of previous timestep is fed as input 
-            #  to the next timestep
-            self.decode_outputs_test, self.decode_states_test = tf.contrib.legacy_seq2seq.embedding_rnn_seq2seq(
-                self.encoder_inputs, self.decoder_inputs, stacked_lstm, xsize, ysize,embedding_size,
-                feed_previous=True)
+            # weighted loss
+            # the weights are initially all the same
+            self.loss_weights = [ tf.placeholder(shape=[None,], 
+                                                 dtype=tf.float32,
+                                                 name='dl_{}'.format(t)) for t in range(ylen) ]
+            self.loss = tf.contrib.legacy_seq2seq.sequence_loss(self.decode_outputs, self.labels, self.loss_weights, ysize)
 
-        # weighted loss
-        # the weights are initially all the same
-        loss_weights = [ tf.ones_like(label, dtype=tf.float32) for label in self.labels ]
-        self.loss = tf.contrib.legacy_seq2seq.sequence_loss(self.decode_outputs, self.labels, loss_weights, ysize)
+            # train op to minimize the loss
+            self.train_op = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(self.loss)
 
-        # train op to minimize the loss
-        self.train_op = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(self.loss)
-
+        else:
+            with tf.variable_scope('decoder') as scope:
+                self.decode_outputs_test, self.decode_states_test = tf.contrib.legacy_seq2seq.embedding_rnn_seq2seq(
+                    self.encoder_inputs, self.decoder_inputs, stacked_lstm, xsize, ysize,embedding_size,
+                    feed_previous=True)
         tf.logging.vlog(tf.logging.INFO, "Finished Initializing Model!")
 
 
     # get the feed dictionary
-    def get_feed(self, X, Y, keep_prob):
+    def get_feed(self, X, Y, Yw, keep_prob):
         # print("X:")
         # print(len(X))
         # print("Encoder in:")
@@ -94,6 +102,8 @@ class Model:
 
         feed = {self.encoder_inputs[t]: X[t] for t in range(self.xlen)}
         feed.update({self.labels[t]: Y[t] for t in range(self.ylen)})
+        if self.is_training:
+            feed.update({self.loss_weights[t]: Yw[t] for t in range(self.ylen)})
         # probability of a dropout
         feed[self.keep_prob] = keep_prob
         return feed
@@ -101,9 +111,9 @@ class Model:
     # run one batch for training
     def train_batch(self, sess, train_batch_gen):
         # get batches
-        batchX, batchY = train_batch_gen.__next__()
+        batchX, batchY, weightY = train_batch_gen.__next__()
         # build feed
-        feed = self.get_feed(batchX, batchY, keep_prob=self.dropout_prob)
+        feed = self.get_feed(batchX, batchY, weightY, keep_prob=self.dropout_prob)
         # print("Train op: ")
         # print(self.train_op)
         # print("Loss: ")
@@ -115,9 +125,9 @@ class Model:
 
     def eval_step(self, sess, eval_batch_gen):
         # get batches
-        batchX, batchY = eval_batch_gen.__next__()
+        batchX, batchY, weightY = eval_batch_gen.__next__()
         # build feed
-        feed = self.get_feed(batchX, batchY, keep_prob=1.0)
+        feed = self.get_feed(batchX, batchY, weightY, keep_prob=1.0)
         loss_v, dec_op_v = sess.run([self.loss, self.decode_outputs_test], feed)
         # dec_op_v is a list; also need to transpose 0,1 indices 
         #  (interchange batch_size and timesteps dimensions
@@ -133,6 +143,8 @@ class Model:
         return np.mean(losses)
 
     def train(self, train_set, valid_set, sess=None):
+        if not self.is_training:
+            raise ValueError("Training is disabled!")
         # save the model every time we advance by a percentage point
         saver = tf.train.Saver()
 
@@ -147,15 +159,15 @@ class Model:
         # run M epochs
         for i in range(self.epochs):
             try:
-                self.train_batch(sess, train_set)
+                loss_v = self.train_batch(sess, train_set)
                 if i and i % (self.epochs // 100) == 0: 
                     # save model to disk
                     saver.save(sess, self.save_path + self.model_name + '.ckpt', global_step=i)
                     # evaluate to get validation loss
-                    val_loss = self.eval_batches(sess, valid_set, 16)
+                    # val_loss = self.eval_batches(sess, valid_set, 8)
                     # print stats
                     print('Model saved to disk at iteration #{}'.format(i))
-                    print('val loss : {0:.6f}'.format(val_loss))
+                    # print('val loss : {0:.6f}'.format(val_loss))
                     sys.stdout.flush()
             except KeyboardInterrupt: # this will most definitely happen, so handle it
                 tf.logging.vlog(tf.logging.INFO, "Interrupted by user at iteration {}".format(i))
@@ -191,6 +203,7 @@ class Model:
         feed_dict = {self.encoder_inputs[t]: X[t] for t in range(self.xlen)}
         feed_dict[self.keep_prob] = 1.0
         dec_op_v = sess.run(self.decode_outputs_test, feed_dict)
+        print(dec_op_v)
         # dec_op_v is a list; also need to transpose 0,1 indices 
         #  (interchange batch_size and timesteps dimensions)
         dec_op_v = np.array(dec_op_v).transpose([1,0,2])
