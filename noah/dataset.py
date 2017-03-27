@@ -5,7 +5,7 @@ import tensorflow as tf
 
 class Dataset:
     def __init__(self, datasetPath, maxX=25, maxY=25, trainFrac=0.80, vocab_size=4000):
-        tf.logging.vlog(tf.logging.INFO, "Initializing DateSet...")
+        tf.logging.vlog(tf.logging.INFO, "Initializing Dataset...")
         self.datasetPath = datasetPath
         self.maxX = maxX
         self.maxY = maxY
@@ -29,7 +29,7 @@ class Dataset:
 
         self.loadData()
         tf.logging.vlog(tf.logging.INFO, "Loaded %d words and %d Q&A pairs" % (len(self.word2id), len(self.questions)))
-        tf.logging.vlog(tf.logging.INFO, "Finished Initializing DateSet!")
+        tf.logging.vlog(tf.logging.INFO, "Finished Initializing Dataset!")
 
     def getTrainingData(self):
         testSplit = int(len(self.questions) * self.trainFrac)
@@ -125,9 +125,6 @@ class Dataset:
         wordId = self.word2id.get(word)
         if not wordId:
             wordId = self.tokens["UNKNOWN"]
-
-        self.word2id[word] = wordId
-        self.id2word[wordId] = word
 
         return wordId
 
