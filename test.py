@@ -1,5 +1,5 @@
 from noah.dataset import Dataset
-from noah.model2 import Model
+from noah.model import Model
 
 import tensorflow as tf
 tf.logging.set_verbosity(tf.logging.INFO)
@@ -23,7 +23,6 @@ model = Model(xlen=xlen, ylen=ylen, xsize=xsize, ysize=ysize,
               save_path=save_path,
               epochs=epochs,
               learning_rate=learning_rate,
-              model_name="blagh2",
               train=False)
 
 session = model.restore_last_session()
