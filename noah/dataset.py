@@ -169,3 +169,10 @@ class Dataset:
             yv = self.getYWeights(y)
             # transpose because we want a[i] to be the vector for the word at i
             yield x.T, y.T, yv.T
+
+    def getBatches(self, data, batch_size):
+        batches = []
+        for batch in self.getBatch(data, batch_size):
+            batches.append(batch)
+
+        return batches

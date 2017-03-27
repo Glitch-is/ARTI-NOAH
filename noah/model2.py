@@ -185,23 +185,22 @@ class Model:
         # run M epochs
         for i in range(self.args.epochs):
             try:
-                X, Y, Yv = train_set.__next__()
-
-                Y2 = []
-                for y in Y.T:
-                    Y2.append(np.insert(y, 0, 0)[:-1])
-                Y2 = np.array(Y2).T
-                ops, feed = self.step((X, Y, Y2, Yv))
-                loss_v = sess.run(ops, feed)
-                if i and i % (self.args.epochs // 100) == 0: 
-                    # save model to disk
-                    saver.save(sess, self.args.save_path + self.args.model_name + '.ckpt', global_step=i)
-                    # evaluate to get validation loss
-                    # val_loss = self.eval_batches(sess, valid_set, 8)
-                    # print stats
-                    print('Model saved to disk at iteration #{}'.format(i))
-                    # print('val loss : {0:.6f}'.format(val_loss))
-                    sys.stdout.flush()
+                for X, Y, Yv in train_set:
+                    Y2 = []
+                    for y in Y.T:
+                        Y2.append(np.insert(y, 0, 0)[:-1])
+                    Y2 = np.array(Y2).T
+                    ops, feed = self.step((X, Y, Y2, Yv))
+                    loss_v = sess.run(ops, feed)
+                    if i and i % (self.args.epochs // 100) == 0: 
+                        # save model to disk
+                        saver.save(sess, self.args.save_path + self.args.model_name + '.ckpt', global_step=i)
+                        # evaluate to get validation loss
+                        # val_loss = self.eval_batches(sess, valid_set, 8)
+                        # print stats
+                        print('Model saved to disk at iteration #{}'.format(i))
+                        # print('val loss : {0:.6f}'.format(val_loss))
+                        sys.stdout.flush()
             except KeyboardInterrupt: # this will most definitely happen, so handle it
                 tf.logging.vlog(tf.logging.INFO, "Interrupted by user at iteration {}".format(i))
                 break

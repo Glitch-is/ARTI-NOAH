@@ -27,7 +27,7 @@ model = Model(xlen=xlen, ylen=ylen, xsize=xsize, ysize=ysize,
               train=True)
 
 training = dataset.getTrainingData()
-training_batch = dataset.getRandomBatch(training, batch_size)
+training_batch = dataset.getBatch(training, batch_size)
 test_batch = dataset.getRandomBatch(dataset.getTestingData(), batch_size)
 model.train(training_batch, test_batch)
 
