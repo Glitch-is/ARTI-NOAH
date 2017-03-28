@@ -3,10 +3,12 @@ import nltk
 import numpy as np
 import tensorflow as tf
 from noah.corpus.opensubsdata import OpensubsData
+from noah.corpus.cornelldata import CornellData
 import os
 import pickle
 import re
 from tqdm import tqdm
+from collections import Counter
 
 class Dataset:
     def __init__(self, datasetPath, maxX=25, maxY=25, trainFrac=0.80, vocab_size=20000, corpus="txt"):
@@ -105,9 +107,22 @@ class Dataset:
                     if questionText != "" and answerText != "":
                         if not questionText.isspace() and not answerText.isspace():
                             self.process(questionText, answerText)
+            elif self.corpus == "cornell":
+                cornellData = CornellData(self.datasetPath)
+                conversations = cornellData.getConversations()
+                for conversation in conversations:
+                    questionText = self.cleanText(conversation["lines"][0]["text"])
+                    answerText = self.cleanText(conversation["lines"][1]["text"])
+
+                    if questionText != "" and answerText != "":
+                        if not questionText.isspace() and not answerText.isspace():
+                            self.process(questionText, answerText)
 
             self.questions = np.array(self.questions)
             self.answers = np.array(self.answers)
+
+            # Get rid of words with only one occurance and fix ids
+            self.pruneData()
 
             os.makedirs(os.path.dirname(self.savedSamplePath), exist_ok=True)
             with open(os.path.join(self.savedSamplePath), 'wb') as f:
@@ -119,6 +134,7 @@ class Dataset:
                 }
                 pickle.dump(data, f, -1)
 
+
     def process(self, questionText, answerText):
         question = self.extractText(questionText)
         question = self.addPadding(question, self.maxX)[::-1]
@@ -128,6 +144,36 @@ class Dataset:
         answer = self.addPadding([self.tokens["GO"]] + answer + [self.tokens["END"]], self.maxY + 1)
         self.answers.append(answer)
 
+    def pruneData(self):
+        idFreq = Counter()
+        for sequence in self.answers:
+            for wordId in sequence:
+                idFreq[wordId] += 1
+        for sequence in self.questions:
+            for wordId in sequence:
+                idFreq[wordId] += 1
+
+        idMap = {}
+        stepCounter = 4 # because of tokens
+        for (id, count) in idFreq.items():
+            if count == 1:
+                idMap[id] = self.tokens["UNKNOWN"]
+            else:
+                idMap[id] = stepCounter
+                stepCounter += 1
+
+        for (word, id) in self.word2id.items():
+            # Don't care about tokens
+            if id > 3:
+                self.word2id[word] = idMap[id]
+                self.id2word[idMap[id]] = word
+
+        for sequence in self.answers:
+            for index, wordId in enumerate(sequence):
+                sequence[index] = idMap[wordId]
+        for sequence in self.questions:
+            for index, wordId in enumerate(sequence):
+                sequence[index] = idMap[wordId]
 
     def cleanText(self, text):
         return re.sub('[^a-zA-Z0-9 ]','', text)

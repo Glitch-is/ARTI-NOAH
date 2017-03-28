@@ -4,4 +4,6 @@ __pycache__/
 save/
 data/opensubs/OpenSubtitles/
 data/opensubs/download*
+data/cornell/movie_lines.txt
+data/cornell/movie_conversations.txt
 
