@@ -6,6 +6,7 @@ from noah.corpus.opensubsdata import OpensubsData
 import os
 import pickle
 import re
+from tqdm import tqdm
 
 class Dataset:
     def __init__(self, datasetPath, maxX=25, maxY=25, trainFrac=0.80, vocab_size=20000, corpus="txt"):
@@ -120,6 +121,7 @@ class Dataset:
             self.questions = np.array(self.questions)
             self.answers = np.array(self.answers)
 
+            os.makedirs(os.path.dirname(self.savedSamplePath), exist_ok=True)
             with open(os.path.join(self.savedSamplePath), 'wb') as f:
                 data = {
                     'word2id': self.word2id,
@@ -220,8 +222,15 @@ class Dataset:
             yield x.T, y.T, yv.T
 
     def getBatches(self, data, batch_size):
-        batches = []
-        for batch in self.getBatch(data, batch_size):
-            batches.append(batch)
-
-        return batches
+        q, a = data
+        def singleBatch():
+            arr = np.arange(len(q))
+            np.random.shuffle(arr)
+            for i in range(0, len(arr), batch_size):
+                s = arr[i:min(i + batch_size, len(arr))]
+                x, y = q[s], a[s]
+                yv = self.getYWeights(y)
+                # transpose because we want a[i] to be the vector for the word at i
+                yield x.T, y.T, yv.T
+        while True:
+            yield tqdm(singleBatch(), total=len(q) // batch_size)

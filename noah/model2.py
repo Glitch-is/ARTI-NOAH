@@ -22,6 +22,7 @@ Model to predict the next sentence given an input sequence
 import tensorflow as tf
 import numpy as np
 import sys
+import os
 
 
 
@@ -59,6 +60,8 @@ class Model:
         self.lossFct = None
         self.optOp = None
         self.outputs = None  # Outputs of the network, list of probability for each words
+
+        os.makedirs(self.args.save_path, exist_ok=True)
 
         # Construct the graphs
         self.buildNetwork()
@@ -170,7 +173,7 @@ class Model:
 
         # Return one pass operator
         return ops, feedDict
-    def train(self, train_set, valid_set, sess=None):
+    def train(self, train_set, valid_set, sess=None, save_every=50):
         # save the model every time we advance by a percentage point
         saver = tf.train.Saver()
 
@@ -183,24 +186,31 @@ class Model:
 
         tf.logging.vlog(tf.logging.INFO, "Start Training")
         # run M epochs
+        step = 0
         for i in range(self.args.epochs):
+            print("Epoch {}/{}".format(step+1, self.args.epochs))
             try:
-                X, Y, Yv = train_set.__next__()
-                Y2 = []
-                for y in Y.T:
-                    Y2.append(np.insert(y, 0, 0)[:-1])
-                Y2 = np.array(Y2).T
-                ops, feed = self.step((X, Y, Y2, Yv))
-                loss_v = sess.run(ops, feed)
-                if i and i % (self.args.epochs // 100) == 0: 
-                    # save model to disk
-                    saver.save(sess, self.args.save_path + self.args.model_name + '.ckpt', global_step=i)
-                    # evaluate to get validation loss
-                    # val_loss = self.eval_batches(sess, valid_set, 8)
-                    # print stats
-                    print('Model saved to disk at iteration #{}'.format(i))
-                    # print('val loss : {0:.6f}'.format(val_loss))
-                    sys.stdout.flush()
+                batch = train_set.__next__()
+                for X, Y, Yv in batch:
+                    Y2 = []
+                    for y in Y.T:
+                        Y2.append(np.insert(y, 0, 0)[:-1])
+                    Y2 = np.array(Y2).T
+                    ops, feed = self.step((X, Y, Y2, Yv))
+                    _, loss = sess.run(ops, feed)
+                    step += 1
+                    if step % 100 == 0:
+                        perplexity = math.exp(float(loss)) if loss < 300 else float("inf")
+                        print("Step %d Loss %.2f Perplexity %.2f" % (step, loss, perplexity))
+                    if step % save_every == 0:
+                        # save model to disk
+                        saver.save(sess, self.args.save_path + self.args.model_name + '.ckpt', global_step=i)
+                        # evaluate to get validation loss
+                        # val_loss = self.eval_batches(sess, valid_set, 8)
+                        # print stats
+                        print('Model saved to disk at iteration #{}'.format(step))
+                        # print('val loss : {0:.6f}'.format(val_loss))
+                        sys.stdout.flush()
             except KeyboardInterrupt: # this will most definitely happen, so handle it
                 tf.logging.vlog(tf.logging.INFO, "Interrupted by user at iteration {}".format(i))
                 break

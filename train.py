@@ -1,6 +1,6 @@
 import noah.dataset
 from noah.dataset import Dataset
-from noah.model import Model
+from noah.model2 import Model
 
 import tensorflow as tf
 tf.logging.set_verbosity(tf.logging.INFO)
@@ -13,8 +13,8 @@ hidden_size = 512
 embedding_size = 25
 num_layers=3
 save_path="save/opensubs/"
-batch_size=40
-epochs=1000
+batch_size=256
+epochs=30
 learning_rate=0.002
 model = Model(xlen=xlen, ylen=ylen, xsize=xsize, ysize=ysize,
               hidden_size=hidden_size,
@@ -23,9 +23,10 @@ model = Model(xlen=xlen, ylen=ylen, xsize=xsize, ysize=ysize,
               save_path=save_path,
               epochs=epochs,
               learning_rate=learning_rate,
+              model_name="blagh",
               train=True)
 
 training = dataset.getTrainingData()
-training_batch = dataset.getRandomBatch(training, batch_size)
+training_batch = dataset.getBatches(training, batch_size)
 test_batch = dataset.getRandomBatch(dataset.getTestingData(), batch_size)
 model.train(training_batch, test_batch)
