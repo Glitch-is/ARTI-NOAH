@@ -194,6 +194,10 @@ class Dataset:
                 ret.append(self.id2word[id])
         return " ".join(ret)
 
+    def str2sequence(self, string):
+        seq = self.extractText(self.cleanText(string))
+        return self.addPadding(seq)[::-1]
+
     def getYWeights(self, Y):
         yweights = [np.ones(len(a), dtype=np.float32) for a in Y]
         for i in range(len(Y)):
