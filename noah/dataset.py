@@ -3,6 +3,7 @@ import nltk
 import numpy as np
 import tensorflow as tf
 from noah.corpus.opensubsdata import OpensubsData
+from noah.corpus.cornelldata import CornellData
 import os
 import pickle
 import re
@@ -104,6 +105,22 @@ class Dataset:
             elif self.corpus == "opensubs":
                 osubs = OpensubsData(self.datasetPath)
                 conversations = osubs.getConversations()
+                for conversation in conversations:
+                    questionText = self.cleanText(conversation["lines"][0]["text"])
+                    answerText = self.cleanText(conversation["lines"][1]["text"])
+
+                    if questionText != "" and answerText != "":
+                        if not questionText.isspace() and not answerText.isspace():
+                            question = self.extractText(questionText)
+                            question = self.addPadding(question)[::-1]
+                            self.questions.append(question)
+
+                            answer = self.extractText(answerText, answer=True)
+                            answer = self.addPadding(answer + [self.tokens["END"]])
+                            self.answers.append(answer)
+            elif self.corpus == "cornell":
+                cornellData = CornellData(self.datasetPath)
+                conversations = cornellData.getConversations()
                 for conversation in conversations:
                     questionText = self.cleanText(conversation["lines"][0]["text"])
                     answerText = self.cleanText(conversation["lines"][1]["text"])
