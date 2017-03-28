@@ -144,7 +144,8 @@ class Dataset:
         idMap = {}
         # assume the tokens are at the front
         stepCounter = len(tokens) 
-        for (id, count) in idFreq.items():
+        for id in range(4, len(self.word2id)):
+            count = idFreq[id]
             word = self.id2word[id]
             if count == 1:
                 idMap[id] = self.tokens["UNKNOWN"]
@@ -152,9 +153,9 @@ class Dataset:
                 del self.id2word[id]
             else:
                 idMap[id] = stepCounter
+                del self.id2word[id]
                 self.word2id[word] = stepCounter
                 self.id2word[stepCounter] = word
-                del self.id2word[id]
                 stepCounter += 1
 
         for sequence in self.answers:
