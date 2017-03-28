@@ -174,6 +174,12 @@ class Model:
 
         # Return one pass operator
         return ops, feedDict
+
+    def get_session():
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth=True
+        return tf.Session(config=config)
+
     def train(self, train_set, valid_set, sess=None, save_every=50):
         # save the model every time we advance by a percentage point
         saver = tf.train.Saver()
@@ -181,7 +187,7 @@ class Model:
         # If the session parameter is not given, we construct a new one
         if not sess:
             # create a session
-            sess = tf.Session()
+            sess = self.get_session()
             # init all variables
             sess.run(tf.global_variables_initializer())
 
@@ -227,10 +233,11 @@ class Model:
         sys.stdout.flush()
         self.session = sess
         return sess
+
     def restore_last_session(self):
         saver = tf.train.Saver()
         # create a session
-        sess = tf.Session()
+        sess = self.get_session()
         # get checkpoint state
         ckpt = tf.train.get_checkpoint_state(self.args.save_path)
         # restore session
@@ -238,6 +245,7 @@ class Model:
             saver.restore(sess, ckpt.model_checkpoint_path)
         # return to user
         return sess
+
     # prediction
     def predict(self, sess, X):
         assert(not self.args.train)
