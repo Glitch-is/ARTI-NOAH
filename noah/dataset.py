@@ -155,10 +155,12 @@ class Dataset:
         return seq + [self.tokens["PAD"]] * (self.maxX - len(seq))
 
 
-    def extractText(self, line, answer=False):
+    def extractText(self, line, answer=False, store=True):
         seq = []
 
         sentence_tokens = nltk.sent_tokenize(line)
+        if len(sentence_tokens) == 0:
+            return []
         if answer:
             line = sentence_tokens[0]
         else:
@@ -173,7 +175,10 @@ class Dataset:
                 tokens = tokens[:self.maxX]
 
         for token in tokens:
-            seq.append(self.encodeWordStore(token))
+            if store:
+                seq.append(self.encodeWordStore(token))
+            else:
+                seq.append(self.encodeWord(token))
 
         return seq
 
@@ -212,8 +217,9 @@ class Dataset:
         return " ".join(ret)
 
     def str2sequence(self, string):
-        seq = self.extractText(self.cleanText(string))
-        return self.addPadding(seq)[::-1]
+        seq = self.extractText(self.cleanText(string), store=False)
+        res = self.addPadding(seq)[::-1]
+        return np.array([res])
 
     def getYWeights(self, Y):
         yweights = [np.ones(len(a), dtype=np.float32) for a in Y]

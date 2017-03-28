@@ -1,30 +1,8 @@
-import noah.dataset
-from noah.dataset import Dataset
-from noah.model2 import Model
-
+from load import main
 import tensorflow as tf
 tf.logging.set_verbosity(tf.logging.INFO)
 
-
-xlen = ylen = 5
-dataset = Dataset("data/cornell", maxX=xlen, maxY=ylen, corpus="cornell")
-xsize = ysize = len(dataset.word2id)
-hidden_size = 512
-embedding_size = 25
-num_layers=3
-save_path="save/cornell/"
-batch_size=256
-epochs=30
-learning_rate=0.002
-model = Model(xlen=xlen, ylen=ylen, xsize=xsize, ysize=ysize,
-              hidden_size=hidden_size,
-              embedding_size=embedding_size,
-              num_layers=num_layers,
-              save_path=save_path,
-              epochs=epochs,
-              learning_rate=learning_rate,
-              model_name="blagh",
-              train=True)
+dataset, model = main(train=True)
 
 training = dataset.getTrainingData()
 training_batch = dataset.getBatches(training, batch_size)
