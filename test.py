@@ -7,12 +7,12 @@ tf.logging.set_verbosity(tf.logging.INFO)
 
 
 xlen = ylen = 5
-dataset = Dataset("data/opensubs/OpenSubtitles", maxX=xlen, maxY=ylen, corpus="opensubs")
+dataset = Dataset("data/cornell", maxX=xlen, maxY=ylen, corpus="cornell")
 xsize = ysize = len(dataset.word2id)
 hidden_size = 512
 embedding_size = 25
 num_layers=3
-save_path="save/opensubs/"
+save_path="save/cornell/"
 batch_size=256
 epochs=30
 learning_rate=0.002
