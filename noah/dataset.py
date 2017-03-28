@@ -241,7 +241,7 @@ class Dataset:
 
     def str2sequence(self, string):
         seq = self.extractText(self.cleanText(string), store=False)
-        res = self.addPadding(seq)[::-1]
+        res = self.addPadding(seq, self.maxX)[::-1]
         return np.array([res])
 
     def getYWeights(self, Y):
