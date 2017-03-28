@@ -160,7 +160,7 @@ class Model:
         # create a session
         sess = self.get_session()
         # get checkpoint state
-        ckpt = tf.train.get_checkpoint_state(self.args.save_path)
+        ckpt = tf.train.get_checkpoint_state(self.save_path)
         # restore session
         if ckpt and ckpt.model_checkpoint_path:
             saver.restore(sess, ckpt.model_checkpoint_path)
