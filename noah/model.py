@@ -125,7 +125,7 @@ class Model:
                 batch = train_generator.__next__()
                 for vals in batch:
                     feed = self.get_feed(*vals)
-                    _, loss = sess.run([self.train_op, self.loss], feed)
+                    _, loss = sess.run([self.opt_op, self.loss], feed)
                     step += 1
                     if step % 100 == 0:
                         tqdm.write("----- Step: %d ---- Loss: %.2f ------\n" % (step, loss))
