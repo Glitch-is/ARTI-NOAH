@@ -1,5 +1,5 @@
 from noah.dataset import Dataset
-from noah.model import Model
+from noah.model2 import Model
 
 import tensorflow as tf
 tf.logging.set_verbosity(tf.logging.INFO)
