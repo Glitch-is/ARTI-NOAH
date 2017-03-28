@@ -171,6 +171,8 @@ class Model:
     def predict(self, sess, X):
         assert(len(X) == self.xlen)
         feed = {self.encoder_inputs[t]: X[t] for t in range(self.xlen)}
+        # the decoder starts with the GO symbol
+        feed.update({self.decoder_inputs[0]: [0] * len(X[0])})
 
         dec_op_v = sess.run(self.outputs, feed)
         print(dec_op_v)
