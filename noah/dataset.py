@@ -136,18 +136,22 @@ class Dataset:
 
     def pruneData(self):
         idFreq = Counter()
+        tokens = set(self.tokens.values())
         for sequence in self.answers:
             for wordId in sequence:
+                if wordId in tokens:
+                    continue
                 idFreq[wordId] += 1
         for sequence in self.questions:
             for wordId in sequence:
+                if wordId in tokens:
+                    continue
                 idFreq[wordId] += 1
 
         idMap = {}
-        stepCounter = 4 # because of tokens
+        # assume the tokens are at the front
+        stepCounter = len(tokens) 
         for (id, count) in idFreq.items():
-            if id < 4:
-                continue
             word = self.id2word[id]
             if count == 1:
                 idMap[id] = self.tokens["UNKNOWN"]
@@ -162,9 +166,15 @@ class Dataset:
 
         for sequence in self.answers:
             for index, wordId in enumerate(sequence):
+                # ignore tokens
+                if wordId in tokens:
+                    continue
                 sequence[index] = idMap[wordId]
         for sequence in self.questions:
             for index, wordId in enumerate(sequence):
+                # ignore tokens
+                if wordId in tokens:
+                    continue
                 sequence[index] = idMap[wordId]
 
     def cleanText(self, text):
