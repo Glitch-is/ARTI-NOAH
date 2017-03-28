@@ -175,7 +175,7 @@ class Model:
         # Return one pass operator
         return ops, feedDict
 
-    def get_session():
+    def get_session(self):
         config = tf.ConfigProto()
         config.gpu_options.allow_growth=True
         return tf.Session(config=config)
