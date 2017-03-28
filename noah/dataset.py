@@ -16,8 +16,6 @@ class Dataset:
         self.datasetPath = datasetPath
         self.maxX = maxX
         self.maxY = maxY
-        self.trainFrac = trainFrac
-        self.testFrac = 1 - trainFrac
         self.vocab_size = vocab_size
         self.corpus = corpus
 
