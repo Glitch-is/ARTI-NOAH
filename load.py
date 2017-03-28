@@ -4,12 +4,12 @@ from noah.model2 import Model
 
 def main(train=True, model_name="blagh"):
     xlen = ylen = 5
-dataset = Dataset("data/cornell", maxX=xlen, maxY=ylen, corpus="cornell")
+    dataset = Dataset("data/cornell", maxX=xlen, maxY=ylen, corpus="cornell")
     xsize = ysize = len(dataset.word2id)
     hidden_size = 512
     embedding_size = 25
     num_layers=3
-save_path="save/cornell/"
+    save_path="save/cornell/"
     batch_size=256
     epochs=30
     learning_rate=0.002
