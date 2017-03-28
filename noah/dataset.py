@@ -90,27 +90,17 @@ class Dataset:
 
                 lines = self.cleanText(lines)
 
-                # TODO: split into training and test data
-                for lineNum in range(0, len(lines)-1, 2):
+                for lineNum in tqdm(range(0, len(lines)-1, 2), total=len(lines)//2, desc="Processing..."):
                     self.process(lines[lineNum], lines[lineNum+1])
 
-                self.questions = np.array(self.questions)
-                self.answers = np.array(self.answers)
-
-            elif self.corpus == "opensubs":
-                osubs = OpensubsData(self.datasetPath)
-                conversations = osubs.getConversations()
-                for conversation in conversations:
-                    questionText = self.cleanText(conversation["lines"][0]["text"])
-                    answerText = self.cleanText(conversation["lines"][1]["text"])
-
-                    if questionText != "" and answerText != "":
-                        if not questionText.isspace() and not answerText.isspace():
-                            self.process(questionText, answerText)
-            elif self.corpus == "cornell":
-                cornellData = CornellData(self.datasetPath)
-                conversations = cornellData.getConversations()
-                for conversation in conversations:
+            else:
+                if self.corpus == "opensubs":
+                    osubs = OpensubsData(self.datasetPath)
+                    conversations = osubs.getConversations()
+                elif self.corpus == "cornell":
+                    cornellData = CornellData(self.datasetPath)
+                    conversations = cornellData.getConversations()
+                for conversation in tqdm(conversations, desc="Processing..."):
                     questionText = self.cleanText(conversation["lines"][0]["text"])
                     answerText = self.cleanText(conversation["lines"][1]["text"])
 
@@ -156,17 +146,19 @@ class Dataset:
         idMap = {}
         stepCounter = 4 # because of tokens
         for (id, count) in idFreq.items():
+            if id < 4:
+                continue
+            word = self.id2word[id]
             if count == 1:
                 idMap[id] = self.tokens["UNKNOWN"]
+                del self.word2id[word]
+                del self.id2word[id]
             else:
                 idMap[id] = stepCounter
+                self.word2id[word] = stepCounter
+                self.id2word[stepCounter] = word
+                del self.id2word[id]
                 stepCounter += 1
-
-        for (word, id) in self.word2id.items():
-            # Don't care about tokens
-            if id > 3:
-                self.word2id[word] = idMap[id]
-                self.id2word[idMap[id]] = word
 
         for sequence in self.answers:
             for index, wordId in enumerate(sequence):
