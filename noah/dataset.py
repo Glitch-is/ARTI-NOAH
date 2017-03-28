@@ -11,7 +11,7 @@ from tqdm import tqdm
 from collections import Counter
 
 class Dataset:
-    def __init__(self, datasetPath, maxX=25, maxY=25, trainFrac=0.80, vocab_size=20000, corpus="txt"):
+    def __init__(self, datasetPath, maxX=25, maxY=25, vocab_size=20000, corpus="txt"):
         tf.logging.vlog(tf.logging.INFO, "Initializing Dataset...")
         self.datasetPath = datasetPath
         self.maxX = maxX
@@ -41,12 +41,7 @@ class Dataset:
         tf.logging.vlog(tf.logging.INFO, "Finished Initializing Dataset!")
 
     def getTrainingData(self):
-        testSplit = int(len(self.questions) * self.trainFrac)
-        return self.questions[:testSplit], self.answers[:testSplit]
-
-    def getTestingData(self):
-        testSplit = int(len(self.questions) * self.trainFrac)
-        return self.questions[testSplit:], self.answers[testSplit:]
+        return self.questions, self.answers
 
     def loadData(self):
         self.tokens["GO"] = self.encodeWordStore("<GO>")
