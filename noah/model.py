@@ -169,7 +169,7 @@ class Model:
 
     # prediction
     def predict(self, sess, X):
-        assert(len(X) == self.args.xlen)
+        assert(len(X) == self.xlen)
         feed = {self.enccoder_inputs[t]: X[t] for t in range(self.xlen)}
 
         dec_op_v = sess.run(self.outputs, feed)
