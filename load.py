@@ -1,5 +1,5 @@
 from noah.dataset import Dataset
-from noah.model2 import Model
+from noah.model import Model
 
 
 def main(train=True, model_name="blagh"):
@@ -10,7 +10,6 @@ def main(train=True, model_name="blagh"):
     embedding_size = 25
     num_layers=3
     save_path="save/opensubs/"
-    batch_size=256
     epochs=30
     learning_rate=0.002
     dropout_prob=0.9

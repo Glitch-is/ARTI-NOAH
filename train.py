@@ -2,6 +2,7 @@ from load import main
 import tensorflow as tf
 tf.logging.set_verbosity(tf.logging.INFO)
 
+batch_size=256
 dataset, model = main(train=True)
 
 training = dataset.getTrainingData()

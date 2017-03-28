@@ -90,13 +90,7 @@ class Dataset:
 
                 # TODO: split into training and test data
                 for lineNum in range(0, len(lines)-1, 2):
-                    question = self.extractText(lines[lineNum])
-                    question = self.addPadding(question)[::-1]
-                    self.questions.append(question)
-
-                    answer = self.extractText(lines[lineNum+1], answer=True)
-                    answer = self.addPadding(answer + [self.tokens["END"]])
-                    self.answers.append(answer)
+                    self.process(lines[lineNum], lines[lineNum+1])
 
                 self.questions = np.array(self.questions)
                 self.answers = np.array(self.answers)
@@ -110,13 +104,7 @@ class Dataset:
 
                     if questionText != "" and answerText != "":
                         if not questionText.isspace() and not answerText.isspace():
-                            question = self.extractText(questionText)
-                            question = self.addPadding(question)[::-1]
-                            self.questions.append(question)
-
-                            answer = self.extractText(answerText, answer=True)
-                            answer = self.addPadding(answer + [self.tokens["END"]])
-                            self.answers.append(answer)
+                            self.process(questionText, answerText)
 
             self.questions = np.array(self.questions)
             self.answers = np.array(self.answers)
@@ -131,11 +119,21 @@ class Dataset:
                 }
                 pickle.dump(data, f, -1)
 
+    def process(self, questionText, answerText):
+        question = self.extractText(questionText)
+        question = self.addPadding(question, self.maxX)[::-1]
+        self.questions.append(question)
+
+        answer = self.extractText(answerText, answer=True)
+        answer = self.addPadding([self.tokens["GO"]] + answer + [self.tokens["END"]], self.maxY + 1)
+        self.answers.append(answer)
+
+
     def cleanText(self, text):
         return re.sub('[^a-zA-Z0-9 ]','', text)
 
-    def addPadding(self, seq):
-        return seq + [self.tokens["PAD"]] * (self.maxX - len(seq))
+    def addPadding(self, seq, l):
+        return seq + [self.tokens["PAD"]] * (l - len(seq))
 
 
     def extractText(self, line, answer=False, store=True):
@@ -151,8 +149,9 @@ class Dataset:
 
         tokens = nltk.word_tokenize(line)
         if answer:
-            if len(tokens) >= (self.maxY - 1):
-                tokens = tokens[:self.maxY - 1]
+            # -2 to account for the GO and EOS tokens
+            if len(tokens) >= (self.maxY - 2):
+                tokens = tokens[:self.maxY - 2]
         else:
             if len(tokens) >= self.maxX:
                 tokens = tokens[:self.maxX]
@@ -205,11 +204,12 @@ class Dataset:
         return np.array([res])
 
     def getYWeights(self, Y):
-        yweights = [np.ones(len(a), dtype=np.float32) for a in Y]
+        yweights = [[] for a in Y]
         for i in range(len(Y)):
-            for j in range(len(Y[i])):
+            for j in range(self.maxY):
                 if Y[i][j] == self.tokens["PAD"]:
-                    yweights[i][j] = 0.0
+                    break
+            yweights[i] = [1.0] * j + [0.0] * (self.maxY - j)
         return np.array(yweights)
 
 
@@ -239,8 +239,22 @@ class Dataset:
             for i in range(0, len(arr), batch_size):
                 s = arr[i:min(i + batch_size, len(arr))]
                 x, y = q[s], a[s]
-                yv = self.getYWeights(y)
+                # There is an extra padding symbol in there
+                assert(len(y[0]) == self.maxY + 1)
+                # ydecoder is the input without the extra padding
+                # ylabels is the input without the go symbol
+                ydecoder = []
+                ylabels = []
+                for i in range(len(y)):
+                    ydecoder.append(y[i][:-1])
+                    ylabels.append(y[i][1:])
+                ydecoder = np.array(ydecoder)
+                ylabels = np.array(ylabels)
+                assert(len(x[0]) == self.maxX)
+                assert(len(ydecoder[0]) == len(ylabels[0]) == self.maxY)
+                yv = self.getYWeights(ylabels)
+                assert(len(yv[0]) == self.maxY)
                 # transpose because we want a[i] to be the vector for the word at i
-                yield x.T, y.T, yv.T
+                yield x.T, ydecoder.T, ylabels.T, yv.T
         while True:
             yield tqdm(singleBatch(), total=len(q) // batch_size)

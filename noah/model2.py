@@ -180,7 +180,7 @@ class Model:
         config.gpu_options.allow_growth=True
         return tf.Session(config=config)
 
-    def train(self, train_set, valid_set, sess=None, save_every=50):
+    def train(self, train_set, valid_set, sess=None, save_every=500):
         # save the model every time we advance by a percentage point
         saver = tf.train.Saver()
 
