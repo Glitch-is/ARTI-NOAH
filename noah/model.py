@@ -29,6 +29,7 @@ class Model:
         self.epochs = epochs
         self.model_name = model_name
         self.is_training = train
+        self.writer = tf.summary.FileWriter(self.save_path)
         os.makedirs(self.save_path, exist_ok=True)
 
         tf.logging.vlog(tf.logging.INFO, "Initializing Model...")
@@ -80,6 +81,8 @@ class Model:
             # weighted loss
             self.loss = tf.contrib.legacy_seq2seq.sequence_loss(self.outputs, self.labels, self.loss_weights, ysize)
 
+            tf.summary.scalar('loss', self.loss)
+
             # optimizer
             self.opt_op = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(self.loss)
 
@@ -117,6 +120,9 @@ class Model:
             # init all variables
             sess.run(tf.global_variables_initializer())
 
+            self.writer.add_graph(sess.graph)
+        mergedSummaries = tf.summary.merge_all()
+
         tf.logging.vlog(tf.logging.INFO, "Start Training")
         # run M epochs
         step = 0
@@ -126,24 +132,25 @@ class Model:
                 batch = train_generator.__next__()
                 for vals in tqdm(batch, desc="Batch: "):
                     feed = self.get_feed(*vals)
-                    _, loss = sess.run([self.opt_op, self.loss], feed)
+                    _, loss, summary = sess.run([self.opt_op, self.loss, mergedSummaries], feed)
+                    self.writer.add_summary(summary, step)
                     step += 1
                     if step % 100 == 0:
                         tqdm.write("----- Step: %d ---- Loss: %.2f ------\n" % (step, loss))
                     if step % save_every == 0:
                         # save model to disk
-                        saver.save(sess, self.save_path + self.model_name + '.ckpt', global_step=i)
+                        saver.save(sess, self.save_path + self.model_name + '.ckpt', global_step=step)
                         tqdm.write('Model saved to disk at iteration #{} \n'.format(step))
             except KeyboardInterrupt: # this will most definitely happen, so handle it
-                tqdm.write("Interrupted by user at iteration {}\n".format(i))
+                tqdm.write("Interrupted by user at iteration {}\n".format(step))
                 break
             except StopIteration: # We don't have any more training data
-                tqdm.write("Ran out of training data at iteration {}\n".format(i))
+                tqdm.write("Ran out of training data at iteration {}\n".format(step))
                 break
         else:
             tf.logging.vlog(tf.logging.INFO, "Finished Training!")
 
-        saver.save(sess, self.save_path + self.model_name + '.ckpt', global_step=i)
+        saver.save(sess, self.save_path + self.model_name + '.ckpt', global_step=step)
         # print stats
         print('Model saved to disk at end of training')
         sys.stdout.flush()

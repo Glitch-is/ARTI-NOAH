@@ -5,13 +5,13 @@ from noah.model import Model
 def main(train=True, model_name="blagh"):
     xlen = 5
     ylen = xlen + 2
-    dataset = Dataset("data/cornell", maxX=xlen, maxY=ylen, corpus="cornell", clean=False)
+    dataset = Dataset("data/twitter/twitter_en.txt", maxX=xlen, maxY=ylen, corpus="txt", clean=False)
     xsize = ysize = len(dataset.word2id)
     hidden_size = 512
-    embedding_size = 25
-    num_layers=3
+    embedding_size = 30
+    num_layers=2
     save_path="save/twitter/"
-    epochs=30
+    epochs=50
     learning_rate=0.002
     dropout_prob=0.9
 

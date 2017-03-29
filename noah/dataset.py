@@ -21,7 +21,10 @@ class Dataset:
         self.clean = clean
         self.partial = partial
 
-        self.savedSamplePath = "save/corpus/" + corpus + "-" + str(maxX) + "-" + str(vocab_size) + ".pkl"
+        if corpus == "txt":
+            self.savedSamplePath = "save/corpus/" + corpus + "-" + self.datasetPath.replace("/", "_") + "-" + str(maxX) + "-" + str(vocab_size) + ".pkl"
+        else:
+            self.savedSamplePath = "save/corpus/" + corpus + "-" + str(maxX) + "-" + str(vocab_size) + ".pkl"
 
         self.questions = []
         self.answers = []
