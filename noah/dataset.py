@@ -55,11 +55,11 @@ class Dataset:
             self.tokens["END"] = self.word2id['<end>']
             self.tokens["UNKNOWN"] = self.word2id['<unknown>']
         else:
-            self.tokens["GO"] = self.encodeWordStore("<GO>")
+            self.tokens["GO"] = self.encodeWord("<GO>")
             assert(self.word2id["<go>"] == 0)
-            self.tokens["PAD"] = self.encodeWordStore("<PAD>")
-            self.tokens["END"] = self.encodeWordStore("<END>")
-            self.tokens["UNKNOWN"] = self.encodeWordStore("<UNKNOWN>")
+            self.tokens["PAD"] = self.encodeWord("<PAD>")
+            self.tokens["END"] = self.encodeWord("<END>")
+            self.tokens["UNKNOWN"] = self.encodeWord("<UNKNOWN>")
 
             if self.corpus == "txt":
                 lines = []
