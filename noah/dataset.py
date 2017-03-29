@@ -4,6 +4,7 @@ import numpy as np
 import tensorflow as tf
 from noah.corpus.opensubsdata import OpensubsData
 from noah.corpus.cornelldata import CornellData
+from noah.corpus.ubuntudata import UbuntuData
 import os
 import pickle
 import re
@@ -80,6 +81,9 @@ class Dataset:
                 elif self.corpus == "cornell":
                     cornellData = CornellData(self.datasetPath)
                     conversations = cornellData.getConversations()
+                elif self.corpus == "ubuntu":
+                    ubuntuData = UbuntuData(self.datasetPath)
+                    conversations = ubuntuData.getConversations()
 
                 for conversation in tqdm(conversations, desc="Processing..."):
                     for i in range(len(conversation['lines']) - 1):
