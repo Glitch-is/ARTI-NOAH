@@ -3,7 +3,8 @@ from noah.model import Model
 
 
 def main(train=True, model_name="blagh"):
-    xlen = ylen = 5
+    xlen = 5
+    ylen = xlen + 2
     dataset = Dataset("data/cornell", maxX=xlen, maxY=ylen, corpus="cornell")
     xsize = ysize = len(dataset.word2id)
     hidden_size = 512

@@ -93,13 +93,15 @@ class Dataset:
                 elif self.corpus == "cornell":
                     cornellData = CornellData(self.datasetPath)
                     conversations = cornellData.getConversations()
-                for conversation in tqdm(conversations, desc="Processing..."):
-                    questionText = self.cleanText(conversation["lines"][0]["text"])
-                    answerText = self.cleanText(conversation["lines"][1]["text"])
 
-                    if questionText != "" and answerText != "":
-                        if not questionText.isspace() and not answerText.isspace():
-                            self.process(questionText, answerText)
+                for conversation in tqdm(conversations, desc="Processing..."):
+                    for i in range(len(conversation['lines']) - 1):
+                        questionText = self.cleanText(conversation["lines"][i]["text"])
+                        answerText = self.cleanText(conversation["lines"][i + 1]["text"])
+
+                        if questionText != "" and answerText != "":
+                            if not questionText.isspace() and not answerText.isspace():
+                                self.process(questionText, answerText)
 
             self.questions = np.array(self.questions)
             self.answers = np.array(self.answers)
@@ -179,27 +181,32 @@ class Dataset:
 
 
     def extractText(self, line, answer=False, store=True):
-        seq = []
 
         sentence_tokens = nltk.sent_tokenize(line)
         if len(sentence_tokens) == 0:
             return []
-        if answer:
-            line = sentence_tokens[0]
-        else:
-            line = sentence_tokens[-1]
+        sentences = []
+        for sent in sentence_tokens:
+            words = nltk.word_tokenize(sent)
+            sentences.append(words)
 
-        tokens = nltk.word_tokenize(line)
+        mx = 0
         if answer:
             # -2 to account for the GO and EOS tokens
-            if len(tokens) >= (self.maxY - 2):
-                tokens = tokens[:self.maxY - 2]
+            mx = self.maxY - 2
         else:
-            if len(tokens) >= self.maxX:
-                tokens = tokens[:self.maxX]
+            sentences.reverse()
+            mx = self.maxX
 
-        for token in tokens:
-            seq.append(self.encodeWord(token, store=store))
+        seq = []
+        for sent in sentences:
+            if len(seq) + len(sent) <= mx:
+                if answer:
+                    seq = seq + sent
+                else:
+                    seq = sent + seq
+
+        seq = [self.encodeWord(word, store=store) for word in seq]
 
         return seq
 
