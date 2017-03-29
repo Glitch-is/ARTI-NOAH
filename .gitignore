@@ -8,4 +8,6 @@ data/cornell/movie_lines.txt
 data/cornell/movie_conversations.txt
 data/twitter/twitter_en.txt
 data/twitter/twitter_en_small.txt
+data/ubuntu/dialogs/
+data/ubuntu/ubuntu_dialogs.tgz
 

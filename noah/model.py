@@ -16,7 +16,7 @@ class Model:
     # save_path: the path to a checkpoint file saved during training
     # learning_rate: the learning rate
     # epochs: the number of iterations to learn
-    def __init__(self, xlen, ylen, 
+    def __init__(self, xlen, ylen,
             xsize, ysize,
             hidden_size, embedding_size, num_layers, save_path,
             learning_rate=0.001, dropout_prob=0.5,
@@ -39,8 +39,8 @@ class Model:
 
         with tf.name_scope('encoder'):
             #  encoder inputs : list of indices of length xlen
-            self.encoder_inputs = [ tf.placeholder(shape=[None,], 
-                            dtype=tf.int32, 
+            self.encoder_inputs = [ tf.placeholder(shape=[None,],
+                            dtype=tf.int32,
                             name='ei_{}'.format(t)) for t in range(xlen) ]
 
         with tf.name_scope('decoder'):
@@ -50,7 +50,7 @@ class Model:
             #  decoder inputs : 'GO' + [ y1, y2, ... y_t-1 ]
             self.decoder_inputs = [ tf.placeholder(shape=[None,], dtype=tf.int32, name='inputs') for t in range(ylen) ]
             # The loss weights
-            self.loss_weights = [ tf.placeholder(shape=[None,], 
+            self.loss_weights = [ tf.placeholder(shape=[None,],
                                                  dtype=tf.float32,
                                                  name='weights') for t in range(ylen) ]
 
@@ -62,16 +62,16 @@ class Model:
                 output_keep_prob=dropout_prob)
         else:
             basic_cell = tf.contrib.rnn.BasicLSTMCell(hidden_size, state_is_tuple=True)
-        
+
         # stack cells together : n layered model
         stacked_lstm = tf.contrib.rnn.MultiRNNCell([basic_cell] * num_layers, state_is_tuple=True)
 
         self.outputs, self.states = tf.contrib.legacy_seq2seq.embedding_rnn_seq2seq(
             self.encoder_inputs,
-            self.decoder_inputs, 
+            self.decoder_inputs,
             stacked_lstm,
-            xsize, 
-            ysize, 
+            xsize,
+            ysize,
             embedding_size,
             feed_previous=(not self.is_training)
         )
@@ -107,6 +107,7 @@ class Model:
     def get_session(self):
         config = tf.ConfigProto()
         config.gpu_options.allow_growth=True
+        config.allow_soft_placement=True
         return tf.Session(config=config)
 
     def train(self, train_generator, sess=None, save_every=500):
@@ -178,7 +179,7 @@ class Model:
 
         dec_op_v = sess.run(self.outputs, feed)
         print(dec_op_v)
-        # dec_op_v is a list; also need to transpose 0,1 indices 
+        # dec_op_v is a list; also need to transpose 0,1 indices
         #  (interchange batch_size and timesteps dimensions)
         dec_op_v = np.array(dec_op_v).transpose([1,0,2])
         # return the index of item with highest probability
