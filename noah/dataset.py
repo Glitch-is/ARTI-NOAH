@@ -199,32 +199,23 @@ class Dataset:
                 tokens = tokens[:self.maxX]
 
         for token in tokens:
-            if store:
-                seq.append(self.encodeWordStore(token))
-            else:
-                seq.append(self.encodeWord(token))
+            seq.append(self.encodeWord(token, store=store))
 
         return seq
 
 
-    def encodeWordStore(self, word):
+    def encodeWord(self, word, store=True):
         word = word.lower()
 
         wordId = self.word2id.get(word)
         if not wordId:
-            wordId = len(self.word2id)
+            if not store:
+                return self.tokens["UNKNOWN"]
+            else:
+                wordId = len(self.word2id)
 
         self.word2id[word] = wordId
         self.id2word[wordId] = word
-
-        return wordId
-
-    def encodeWord(self, word):
-        word = word.lower()
-
-        wordId = self.word2id.get(word)
-        if not wordId:
-            wordId = self.tokens["UNKNOWN"]
 
         return wordId
 
