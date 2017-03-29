@@ -42,11 +42,11 @@ class Dataset:
         return self.questions, self.answers
 
     def loadData(self):
-        self.tokens["GO"] = self.encodeWordStore("<GO>")
+        self.tokens["GO"] = self.encodeWord("<GO>")
         assert(self.word2id["<go>"] == 0)
-        self.tokens["PAD"] = self.encodeWordStore("<PAD>")
-        self.tokens["END"] = self.encodeWordStore("<END>")
-        self.tokens["UNKNOWN"] = self.encodeWordStore("<UNKNOWN>")
+        self.tokens["PAD"] = self.encodeWord("<PAD>")
+        self.tokens["END"] = self.encodeWord("<END>")
+        self.tokens["UNKNOWN"] = self.encodeWord("<UNKNOWN>")
 
         if os.path.isfile(self.savedSamplePath):
             with open(self.savedSamplePath, 'rb') as f:
@@ -76,7 +76,7 @@ class Dataset:
                 # print(len(vocab))
                 #
                 # for word in vocab:
-                #     self.encodeWordStore(word)
+                #     self.encodeWord(word)
                 #
                 # print("Word2id: ")
                 # print(len(self.word2id))
