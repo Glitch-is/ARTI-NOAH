@@ -298,5 +298,15 @@ class Dataset:
                 assert(len(yv[0]) == self.maxY)
                 # transpose because we want a[i] to be the vector for the word at i
                 yield x.T, ydecoder.T, ylabels.T, yv.T
+        class LenWrap(object):
+            def __init__(self, gen):
+                self.gen = gen
+            def __iter__(self):
+                return self
+            def __next__(self):
+                return self.gen.__next__()
+            def __len__(self):
+                return len(q) // batch_size
         while True:
-            yield tqdm(singleBatch(), total=len(q) // batch_size)
+            batch = singleBatch()
+            yield LenWrap(batch)

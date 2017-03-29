@@ -120,11 +120,11 @@ class Model:
         tf.logging.vlog(tf.logging.INFO, "Start Training")
         # run M epochs
         step = 0
-        for i in range(self.epochs):
-            print("Epoch {}/{}".format(i, self.epochs))
+        for i in tqdm(range(self.epochs), desc="Epoch: "):
+            tqdm.write("---- Epoch {}/{} ----\n".format(i, self.epochs))
             try:
                 batch = train_generator.__next__()
-                for vals in batch:
+                for vals in tqdm(batch, desc="Batch: "):
                     feed = self.get_feed(*vals)
                     _, loss = sess.run([self.opt_op, self.loss], feed)
                     step += 1
@@ -133,17 +133,12 @@ class Model:
                     if step % save_every == 0:
                         # save model to disk
                         saver.save(sess, self.save_path + self.model_name + '.ckpt', global_step=i)
-                        # evaluate to get validation loss
-                        # val_loss = self.eval_batches(sess, valid_set, 8)
-                        # print stats
-                        print('Model saved to disk at iteration #{}'.format(step))
-                        # print('val loss : {0:.6f}'.format(val_loss))
-                        sys.stdout.flush()
+                        tqdm.write('Model saved to disk at iteration #{} \n'.format(step))
             except KeyboardInterrupt: # this will most definitely happen, so handle it
-                tf.logging.vlog(tf.logging.INFO, "Interrupted by user at iteration {}".format(i))
+                tqdm.write("Interrupted by user at iteration {}\n".format(i))
                 break
             except StopIteration: # We don't have any more training data
-                tf.logging.vlog(tf.logging.INFO, "Ran out of training data at iteration {}".format(i))
+                tqdm.write("Ran out of training data at iteration {}\n".format(i))
                 break
         else:
             tf.logging.vlog(tf.logging.INFO, "Finished Training!")
