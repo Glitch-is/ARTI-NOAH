@@ -11,13 +11,15 @@ from tqdm import tqdm
 from collections import Counter
 
 class Dataset:
-    def __init__(self, datasetPath, maxX=25, maxY=25, vocab_size=20000, corpus="txt"):
+    def __init__(self, datasetPath, maxX=25, maxY=25, vocab_size=20000, corpus="txt", clean=True, partial=False):
         tf.logging.vlog(tf.logging.INFO, "Initializing Dataset...")
         self.datasetPath = datasetPath
         self.maxX = maxX
         self.maxY = maxY
         self.vocab_size = vocab_size
         self.corpus = corpus
+        self.clean = clean
+        self.partial = partial
 
         self.savedSamplePath = "save/corpus/" + corpus + "-" + str(maxX) + "-" + str(vocab_size) + ".pkl"
 
@@ -85,8 +87,7 @@ class Dataset:
                         answerText = self.cleanText(conversation["lines"][i + 1]["text"])
 
                         if questionText != "" and answerText != "":
-                            if not questionText.isspace() and not answerText.isspace():
-                                self.process(questionText, answerText)
+                            self.process(questionText, answerText)
 
             self.questions = np.array(self.questions)
             self.answers = np.array(self.answers)
@@ -107,12 +108,13 @@ class Dataset:
 
     def process(self, questionText, answerText):
         question = self.extractText(questionText)
-        question = self.addPadding(question, self.maxX)[::-1]
-        self.questions.append(question)
+        padded_question = self.addPadding(question, self.maxX)[::-1]
 
         answer = self.extractText(answerText, answer=True)
-        answer = self.addPadding([self.tokens["GO"]] + answer + [self.tokens["END"]], self.maxY + 1)
-        self.answers.append(answer)
+        padded_answer = self.addPadding([self.tokens["GO"]] + answer + [self.tokens["END"]], self.maxY + 1)
+        if question and answer:
+            self.questions.append(padded_question)
+            self.answers.append(padded_answer)
 
     def pruneData(self):
         idFreq = Counter()
@@ -159,7 +161,10 @@ class Dataset:
                 sequence[index] = idMap[wordId]
 
     def cleanText(self, text):
-        return re.sub('[^a-zA-Z0-9 \n]','', text)
+        if self.clean:
+            return re.sub('[^a-zA-Z0-9 \n]','', text).strip()
+        else:
+            return text
 
     def addPadding(self, seq, l):
         return seq + [self.tokens["PAD"]] * (l - len(seq))
@@ -190,6 +195,11 @@ class Dataset:
                     seq = seq + sent
                 else:
                     seq = sent + seq
+        if self.partial and not seq:
+            if answer:
+                seq = sentences[0][:mx]
+            else:
+                seq = sentences[0][len(sentences[0]) - mx:]
 
         seq = [self.encodeWord(word, store=store) for word in seq]
 
@@ -237,13 +247,29 @@ class Dataset:
             yweights[i] = [1.0] * j + [0.0] * (self.maxY - j)
         return np.array(yweights)
 
+    def separateY(self, y):
+        # There is an extra padding symbol in there
+        assert(len(y[0]) == self.maxY + 1)
+        # ydecoder is the input without the extra padding
+        # ylabels is the input without the go symbol
+        ydecoder = []
+        ylabels = []
+        for i in range(len(y)):
+            ydecoder.append(y[i][:-1])
+            ylabels.append(y[i][1:])
+        ydecoder = np.array(ydecoder)
+        ylabels = np.array(ylabels)
+        assert(len(ydecoder[0]) == len(ylabels[0]) == self.maxY)
+        return ydecoder, ylabels
+
 
     def getBatch(self, data, batch_size):
         q, a = data
         for i in range(0, len(data), batch_size):
             x, y = q[i:i + batch_size], a[i:i + batch_size]
-            yv = self.getYWeights(y)
-            yield x.T, y.T, yv.T
+            ydecoder, ylabels = self.separateY(y)
+            yv = self.getYWeights(ylabels)
+            yield x.T, ydecoder.T, ylabels.T, yv.T
 
     def getRandomBatch(self, data, batch_size):
         # a dooope trick
@@ -252,9 +278,9 @@ class Dataset:
             s = random.sample(list(np.arange(len(q))), batch_size)
             # using a list to index a numpy matrix gives you the row vectors corresponding to that index
             x, y = q[s], a[s]
-            yv = self.getYWeights(y)
-            # transpose because we want a[i] to be the vector for the word at i
-            yield x.T, y.T, yv.T
+            ydecoder, ylabels = self.separateY(y)
+            yv = self.getYWeights(ylabels)
+            yield x.T, ydecoder.T, ylabels.T, yv.T
 
     def getBatches(self, data, batch_size):
         q, a = data
@@ -264,19 +290,8 @@ class Dataset:
             for i in range(0, len(arr), batch_size):
                 s = arr[i:min(i + batch_size, len(arr))]
                 x, y = q[s], a[s]
-                # There is an extra padding symbol in there
-                assert(len(y[0]) == self.maxY + 1)
-                # ydecoder is the input without the extra padding
-                # ylabels is the input without the go symbol
-                ydecoder = []
-                ylabels = []
-                for i in range(len(y)):
-                    ydecoder.append(y[i][:-1])
-                    ylabels.append(y[i][1:])
-                ydecoder = np.array(ydecoder)
-                ylabels = np.array(ylabels)
                 assert(len(x[0]) == self.maxX)
-                assert(len(ydecoder[0]) == len(ylabels[0]) == self.maxY)
+                ydecoder, ylabels = self.separateY(y)
                 yv = self.getYWeights(ylabels)
                 assert(len(yv[0]) == self.maxY)
                 # transpose because we want a[i] to be the vector for the word at i
