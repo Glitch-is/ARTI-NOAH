@@ -8,10 +8,14 @@ dataset, model = main(train=False)
 
 session = model.restore_last_session()
 
-input_batch = dataset.getRandomBatch(dataset.getTestingData(), 1).__next__()[0]
+input_batch, _, output_batch, _ = dataset.getRandomBatch(dataset.getTrainingData(), 1).__next__()
+for i, o in zip(input_batch.T, output_batch.T):
+    print(i, o)
+    q = dataset.sequence2str(i[::-1])
+    a = dataset.sequence2str(o)
+    print("Q: {}\nA: {}".format(q, a))
+
 output = model.predict(session, input_batch)
-
-
 for i, o in zip(input_batch.T, output):
     print(list(i), o)
     q = dataset.sequence2str(i[::-1])

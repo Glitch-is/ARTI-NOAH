@@ -5,7 +5,7 @@ from noah.model import Model
 def main(train=True, model_name="blagh"):
     xlen = 5
     ylen = xlen + 2
-    dataset = Dataset("data/cornell", maxX=xlen, maxY=ylen, corpus="cornell")
+    dataset = Dataset("data/cornell", maxX=xlen, maxY=ylen, corpus="cornell", clean=False)
     xsize = ysize = len(dataset.word2id)
     hidden_size = 512
     embedding_size = 25
