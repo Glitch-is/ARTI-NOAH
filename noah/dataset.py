@@ -42,12 +42,6 @@ class Dataset:
         return self.questions, self.answers
 
     def loadData(self):
-        self.tokens["GO"] = self.encodeWord("<GO>")
-        assert(self.word2id["<go>"] == 0)
-        self.tokens["PAD"] = self.encodeWord("<PAD>")
-        self.tokens["END"] = self.encodeWord("<END>")
-        self.tokens["UNKNOWN"] = self.encodeWord("<UNKNOWN>")
-
         if os.path.isfile(self.savedSamplePath):
             with open(self.savedSamplePath, 'rb') as f:
                 data = pickle.load(f)
@@ -61,27 +55,18 @@ class Dataset:
             self.tokens["END"] = self.word2id['<end>']
             self.tokens["UNKNOWN"] = self.word2id['<unknown>']
         else:
+            self.tokens["GO"] = self.encodeWordStore("<GO>")
+            assert(self.word2id["<go>"] == 0)
+            self.tokens["PAD"] = self.encodeWordStore("<PAD>")
+            self.tokens["END"] = self.encodeWordStore("<END>")
+            self.tokens["UNKNOWN"] = self.encodeWordStore("<UNKNOWN>")
+
             if self.corpus == "txt":
                 lines = []
                 with open(self.datasetPath, "r") as f:
                     lines = f.read()
-                # dist = nltk.FreqDist(nltk.word_tokenize(lines.lower()))
-                # print("Total word count:")
-                # print(len(dist))
-                #
-                # vocab = [x[0] for x in dist.most_common(self.vocab_size)]
-                # print(vocab)
 
-                # print("Vocab: ")
-                # print(len(vocab))
-                #
-                # for word in vocab:
-                #     self.encodeWord(word)
-                #
-                # print("Word2id: ")
-                # print(len(self.word2id))
-
-                lines = self.cleanText(lines)
+                lines = self.cleanText(lines).split("\n")
 
                 for lineNum in tqdm(range(0, len(lines)-1, 2), total=len(lines)//2, desc="Processing..."):
                     self.process(lines[lineNum], lines[lineNum+1])
@@ -145,7 +130,7 @@ class Dataset:
 
         idMap = {}
         # assume the tokens are at the front
-        stepCounter = len(tokens) 
+        stepCounter = len(tokens)
         for id in range(4, len(self.word2id)):
             count = idFreq[id]
             word = self.id2word[id]
@@ -174,7 +159,7 @@ class Dataset:
                 sequence[index] = idMap[wordId]
 
     def cleanText(self, text):
-        return re.sub('[^a-zA-Z0-9 ]','', text)
+        return re.sub('[^a-zA-Z0-9 \n]','', text)
 
     def addPadding(self, seq, l):
         return seq + [self.tokens["PAD"]] * (l - len(seq))

@@ -10,7 +10,7 @@ def main(train=True, model_name="blagh"):
     hidden_size = 512
     embedding_size = 25
     num_layers=3
-    save_path="save/cornell/"
+    save_path="save/twitter/"
     epochs=30
     learning_rate=0.002
     dropout_prob=0.9
