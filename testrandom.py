@@ -6,7 +6,6 @@ tf.logging.set_verbosity(tf.logging.INFO)
 dataset, model = main(train=False)
 
 
-session = model.restore_last_session()
 
 input_batch, _, output_batch, _ = dataset.getRandomBatch(dataset.getTrainingData(), 1).__next__()
 for i, o in zip(input_batch.T, output_batch.T):
@@ -15,6 +14,7 @@ for i, o in zip(input_batch.T, output_batch.T):
     a = dataset.sequence2str(o)
     print("Q: {}\nA: {}".format(q, a))
 
+session = model.restore_last_session()
 output = model.predict(session, input_batch)
 for i, o in zip(input_batch.T, output):
     print(list(i), o)
