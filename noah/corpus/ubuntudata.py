@@ -33,7 +33,7 @@ class UbuntuData:
         Args:
             dirName (string): directory where to load the corpus
         """
-        self.MAX_NUMBER_SUBDIR = 10
+        self.MAX_NUMBER_SUBDIR = 200
         self.conversations = []
         __dir = os.path.join(dirName, "dialogs")
         number_subdir = 0
