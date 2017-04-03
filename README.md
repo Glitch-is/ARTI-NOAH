@@ -54,5 +54,5 @@ Machine: nineteen fifty
 * Arnar Páll Jóhannsson
 
 # References
-[A Neural Conversational Model](https://arxiv.org/abs/1506.05869)
-[DeepQA](https://github.com/Conchylicultor/DeepQA)
+* [A Neural Conversational Model](https://arxiv.org/abs/1506.05869)
+* [DeepQA](https://github.com/Conchylicultor/DeepQA)
